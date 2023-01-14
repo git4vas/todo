@@ -1,0 +1,17 @@
+{
+  "name": "todo",
+  "version": "1.0.0",
+  "description": "todo list backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node index.js"
+  },
+  "keywords": [
+    "todo",
+    "express",
+    "rest"
+  ],
+  "author": "vasilii",
+  "license": "ISC"
+}
