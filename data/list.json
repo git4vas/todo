@@ -1,0 +1,5 @@
+{
+    "pk1": { "text": "hello", "flag": false, "parent": null },
+    "pk2": { "text": "hello2", "flag": true, "parent": null },
+    "pk3": { "text": "hello2", "flag": true, "parent": "pk1" }
+}
