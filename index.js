@@ -22,13 +22,13 @@ app.use(express.json());
 
 
 /**
- * Model    HTTP/REST   URI-path (resat, http)
- * ===========================================
- * Create   POST      collection
- * Read     GET         collection
- * Read     GET         entry
- * Update   PUT         entry
- * Delete   DELETE      entry
+ * Model    HTTP/REST   Path        Input       code    Output  
+ * ===================================================================================
+ * Create   POST        collection  new entry   201     entry*, location:entry-path        
+ * Read     GET         collection  -none-      200     entry[]
+ * Read     GET         entry       -none-      200     entry
+ * Update   PUT         entry       entry       200     entry*
+ * Delete   DELETE      entry       -none-      200?    -none-
  */
 
 
@@ -59,7 +59,9 @@ app.post('/entry', function (req, res) {
     const strKey = incrementKey();
     entries[strKey] = {
         text: newEntry.text,
+        // TODO validate text: transform to string
         flag: !!newEntry.flag,
+        // TODO validate parent
         parent: newEntry.parent || null
     };
     res.setHeader('Content-Type', 'application/json')
@@ -68,6 +70,46 @@ app.post('/entry', function (req, res) {
         .send(JSON.stringify(entries[strKey]));        
 });
 //console.log(req.query);
+
+
+// delete entry
+app.delete('/entry/:key', function (req, res) {
+    let returnCode = 500;
+    console.log(`request to delete record ${req.params.key} received`);
+    // check existence of entry (validate input) if does not exist -> return error
+    if (typeof entries[req.params.key] === 'undefined') {
+        console.error(`record ${req.params.key} does not exist`);
+        returnCode = 404;
+    }
+    else {
+        // empty? no -> return error (children exist)
+        let hasChildren = false;
+        _.forEach(entries, function(entry) {
+            if (entry.parent === req.params.key) {
+                hasChildren = true;
+                return false; // break loop (https://lodash.com/docs/4.17.15#forEach)
+            }
+        });
+        if (hasChildren === true) {
+            console.error(`record ${req.params.key} has children, not deleted`);
+        }
+        else{
+            delete entries[req.params.key];
+            returnCode = 200;
+            console.log(`record ${req.params.key} deleted`);
+        }            
+    }
+
+
+    // // TODO delete entry -r
+
+
+    res.status(returnCode)
+        .end();
+});
+
+
+// TODO overwrite file on data change
 
 const startServer = (port) => {
     app.listen(port, () => {
