@@ -55,19 +55,30 @@ app.get('/entry/:key', function (req, res) {
 
 // create entry in collection
 app.post('/entry', function (req, res) {
+    let returnCode = 500;
     const newEntry = req.body;
-    const strKey = incrementKey();
-    entries[strKey] = {
-        text: newEntry.text,
-        // TODO validate text: transform to string
-        flag: !!newEntry.flag,
-        // TODO validate parent
-        parent: newEntry.parent || null
-    };
-    res.setHeader('Content-Type', 'application/json')
-        .setHeader('Location', `/entry/${strKey}`)
-        .status(201)
-        .send(JSON.stringify(entries[strKey]));        
+
+    if (typeof entries[newEntry.parent] === 'undefined') {
+        returnCode = 400;
+        res.status(returnCode)
+            .end();
+        console.error(`the parent entry (key: "${req.body.parent}") does not exist, entry not created`);
+    }
+    else {
+        const strKey = incrementKey();
+        entries[strKey] = {
+            text: newEntry.text,
+            // TODO validate text: transform to string
+            flag: !!newEntry.flag,
+            parent: newEntry.parent || null
+        };
+
+        res.setHeader('Content-Type', 'application/json')
+            .setHeader('Location', `/entry/${strKey}`)
+            .status(201)
+            .send(JSON.stringify(entries[strKey]));        
+    }
+    // TODO res.send() once
 });
 //console.log(req.query);
 
@@ -91,7 +102,7 @@ app.delete('/entry/:key', function (req, res) {
             }
         });
         if (hasChildren === true) {
-            console.error(`record ${req.params.key} has children, not deleted`);
+            console.error(`entry "${req.params.key}" has children, not deleted`);
         }
         else{
             delete entries[req.params.key];
