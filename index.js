@@ -9,6 +9,25 @@ let key = 0;
 const incrementKey = () => `pk${++key}`;
 const setKey = (newKey) => key = 1 * newKey.substring(2);
 
+// separate Model from Service--provide interface to get list items
+const model = {
+    getEntries: () => {
+        return entries;
+    },
+
+    getEntry: (key) => {
+        if (typeof entries[key] === 'undefined') {
+            throw `invalid key "${key}"`;
+        }
+        return entries[key];
+    },
+
+    createEntry: (newEntry) => {
+        return newKey;
+    }
+};
+
+
 // Service
 const app = express();
 // body-parser
@@ -19,7 +38,6 @@ app.use(express.json());
 //    pk2: { text: 'hello2', flag: true, parent: null },
 //    pk3: { text: 'hello2', flag: true, parent: 'pk1' }
 //};
-
 
 /**
  * Model    HTTP/REST   Path        Input       code    Output  
@@ -39,26 +57,37 @@ app.get('/', function (req, res) {
     //res.status(200).json('something else');
 });
 
+// Read collection
 app.get('/entry', function (req, res) {
+    const list = model.getEntries();
     res.setHeader('Content-Type', 'application/json')
         .status(200)
-        .send(JSON.stringify(entries));
-    console.log(entries);
+        .send(JSON.stringify(list));
+    console.log(list);
     //console.log(req.query);
 });
 
+// Read entry
 app.get('/entry/:key', function (req, res) {
     // TODO verify key
-    res.setHeader('Content-Type', 'application/json')
-        .status(200)
-        .send(JSON.stringify(entries[req.params.key]));
+    try{
+        const item = model.getEntry(req.params.key);
+        res.setHeader('Content-Type', 'application/json')
+            .status(200)
+            .send(JSON.stringify(item));
+    }
+    catch(exc) {
+        res.status(404) // TODO errCode=??
+            .end();
+        console.error('error: ' + exc);
+    }
 });
 
-// create entry in collection
+// Create entry in collection
 app.post('/entry', function (req, res) {
     let returnCode = 500;
     const newEntry = req.body;
-
+// TODO throw errors
     if (typeof entries[newEntry.parent] === 'undefined') {
         returnCode = 400;
         res.status(returnCode)
