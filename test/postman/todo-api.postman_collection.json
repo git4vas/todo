@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "542b74de-f869-454a-a528-0afd73e15c32",
+		"name": "todo-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "hello",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entries",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/entry",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entry01",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/entry/pk1",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bad-entry",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/test",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"test"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bad-entry Copy",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/entry/pk",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entry02",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello\", \"flag\": true, \"parent\": \"pk1\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bad parent entry",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello\", \"flag\": true, \"parent\": \"pk\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entry02",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello22\", \"flag\": false, \"parent\": \"pk1\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry/pk2",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bad-entry",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello22\", \"flag\": false, \"parent\": \"pk1\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry/pk",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bad parent entry",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello22\", \"flag\": false, \"parent\": \"pk\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry/pk2",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entry02",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello2\", \"flag\": true, \"parent\": \"pk2\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry/pk2",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "entry01 with children",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"text\": \"hello2\", \"flag\": true, \"parent\": \"pk2\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/entry/pk1",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"entry",
+						"pk1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
