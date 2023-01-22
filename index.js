@@ -11,20 +11,40 @@ const setKey = (newKey) => key = 1 * newKey.substring(2);
 
 // separate Model from Service--provide interface to get list items
 const model = {
-    getEntries: () => {
+    readEntries: () => {
         return entries;
     },
 
-    getEntry: (key) => {
+    readEntry: (key) => {
         if (typeof entries[key] === 'undefined') {
-            throw `invalid key "${key}"`;
+            throw {
+                message: `invalid key "${key}"`,
+                code: 404
+            }
         }
         return entries[key];
     },
 
     createEntry: (newEntry) => {
+        if (newEntry.parent !== null && typeof entries[newEntry.parent] === 'undefined') {
+            const exc = {
+                message: `invalid parent key "${newEntry.parent}", entry not created`,
+                code: 400
+            }
+            console.log("throw: " + JSON.stringify(exc));
+            throw exc;
+        }
+
+        const newKey = incrementKey();
+        entries[newKey] = {
+            text: newEntry.text,
+            flag: !!newEntry.flag,
+            parent: newEntry.parent || null
+        };
+
         return newKey;
     }
+
 };
 
 
@@ -50,6 +70,12 @@ app.use(express.json());
  */
 
 
+const sendError = (error, response) => {
+    response.status(error.code)
+        .end();
+    console.error(`sent error: ${error.code} ${error.message}`); 
+}
+
 app.get('/', function (req, res) {
     res.setHeader('Content-Type', 'text/plain')
         .status(200)
@@ -59,7 +85,7 @@ app.get('/', function (req, res) {
 
 // Read collection
 app.get('/entry', function (req, res) {
-    const list = model.getEntries();
+    const list = model.readEntries();
     res.setHeader('Content-Type', 'application/json')
         .status(200)
         .send(JSON.stringify(list));
@@ -69,61 +95,41 @@ app.get('/entry', function (req, res) {
 
 // Read entry
 app.get('/entry/:key', function (req, res) {
-    // TODO verify key
     try{
-        const item = model.getEntry(req.params.key);
+        console.log(`entry "${req.params.key}" requested`);
+        const item = model.readEntry(req.params.key); // TODO ask why this var--to catch exception HERE?
         res.setHeader('Content-Type', 'application/json')
             .status(200)
             .send(JSON.stringify(item));
+        console.log(`${item} sent`);
     }
     catch(exc) {
-        res.status(404) // TODO errCode=??
-            .end();
-        console.error('error: ' + exc);
+        sendError(exc, res);
     }
 });
+
 
 // Create entry in collection
 app.post('/entry', function (req, res) {
-    let returnCode = 500;
-    const newEntry = req.body;
-// TODO throw errors
-    if (typeof entries[newEntry.parent] === 'undefined') {
-        returnCode = 400;
-        res.status(returnCode)
-            .end();
-        console.error(`the parent entry "${req.body.parent}" does not exist, entry not created`);
-    }
-    else {
-        const strKey = incrementKey();
-        entries[strKey] = {
-            text: newEntry.text,
-            // TODO validate text: transform to string
-            flag: !!newEntry.flag,
-            parent: newEntry.parent || null
-        };
-
+    //let returnCode = 500;
+    try {
+        console.log(`entry creation requested: ${req.body}`);
+        const key = model.createEntry(req.body);
         res.setHeader('Content-Type', 'application/json')
-            .setHeader('Location', `/entry/${strKey}`)
+            .setHeader('Location', `/entry/${key}`)
             .status(201)
-            .send(JSON.stringify(entries[strKey]));        
-
-        console.log(`entry "${req.params.key}" created successfully`);
+            .send(JSON.stringify(entries[key]));        
+        console.log(`entry "${key}" created successfully`);
     }
-    // TODO res.send() once
+    catch(exc) {
+        sendError(exc, res);
+    }       
 });
-//console.log(req.query);
 
 
+// TODO res.send() once
 
-// edit entry in collection
-/**
- *  If an existing resource is modified,
- *  either the 200 (OK)
- *  or 204 (No Content)
- *  response codes SHOULD be sent to indicate successful completion of the request.
- *  [tutorial](https://restfulapi.net/http-methods/)
-*/
+
 
 app.put('/entry/:key', function (req, res) {
     let returnCode = 500;
