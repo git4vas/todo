@@ -48,6 +48,7 @@ app.get('/entry', function (req, res) {
 });
 
 app.get('/entry/:key', function (req, res) {
+    // TODO verify key
     res.setHeader('Content-Type', 'application/json')
         .status(200)
         .send(JSON.stringify(entries[req.params.key]));
@@ -62,7 +63,7 @@ app.post('/entry', function (req, res) {
         returnCode = 400;
         res.status(returnCode)
             .end();
-        console.error(`the parent entry (key: "${req.body.parent}") does not exist, entry not created`);
+        console.error(`the parent entry "${req.body.parent}" does not exist, entry not created`);
     }
     else {
         const strKey = incrementKey();
@@ -77,10 +78,60 @@ app.post('/entry', function (req, res) {
             .setHeader('Location', `/entry/${strKey}`)
             .status(201)
             .send(JSON.stringify(entries[strKey]));        
+
+        console.log(`entry "${req.params.key}" created successfully`);
     }
     // TODO res.send() once
 });
 //console.log(req.query);
+
+
+
+// edit entry in collection
+/**
+ *  If an existing resource is modified,
+ *  either the 200 (OK)
+ *  or 204 (No Content)
+ *  response codes SHOULD be sent to indicate successful completion of the request.
+ *  [tutorial](https://restfulapi.net/http-methods/)
+*/
+
+app.put('/entry/:key', function (req, res) {
+    let returnCode = 500;
+    
+    console.log(`request to change record ${req.params.key} received`);
+    // check existence of entry (validate input) if does not exist -> return error
+    const updEntry = req.body;
+    
+    if (typeof entries[req.params.key] === 'undefined') {
+        console.error(`record "${req.params.key}" does not exist, nothing changed`);
+        returnCode = 404;
+        res.status(returnCode)
+            .end();
+    }
+    else {
+        if (typeof entries[updEntry.parent] === 'undefined'){
+            returnCode = 400;
+            
+            res.status(returnCode)
+                .end();
+            console.error(`parent entry "${req.body.parent}" does no exist, entry not updated`);
+        }
+        
+        else {
+            entries[req.params.key] = updEntry;
+            returnCode = 204;
+
+            res.status(returnCode)
+                .end();
+
+            console.log(`entry "${req.params.key}" updated`);
+        }
+    }
+    // TODO res.send() once
+});
+//console.log(req.query);
+
 
 
 // delete entry
