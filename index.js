@@ -9,13 +9,13 @@ let key = 0;
 const incrementKey = () => `pk${++key}`;
 const setKey = (newKey) => key = 1 * newKey.substring(2);
 
-// separate Model from Service--provide interface to get list items
+// TODO separate Model from Service--provide interface to get list items
 const model = {
-    readEntries: () => {
+    readEntries: function() {
         return entries;
     },
 
-    readEntry: (key) => {
+    readEntry: function(key) {
         if (typeof entries[key] === 'undefined') {
             throw {
                 message: `invalid key "${key}"`,
@@ -25,14 +25,12 @@ const model = {
         return entries[key];
     },
 
-    createEntry: (newEntry) => {
+    createEntry: function(newEntry) {
         if (newEntry.parent !== null && typeof entries[newEntry.parent] === 'undefined') {
-            const exc = {
+            this._throwError({
                 message: `invalid parent key "${newEntry.parent}", entry not created`,
                 code: 400
-            }
-            console.log("throw: " + JSON.stringify(exc));
-            throw exc;
+            });
         }
 
         const newKey = incrementKey();
@@ -43,10 +41,44 @@ const model = {
         };
 
         return newKey;
+    },
+
+    // edit entry in collection
+    /**
+     *  If an existing resource is modified,
+     *  either the 200 (OK)
+     *  or 204 (No Content)
+     *  response codes SHOULD be sent to indicate successful completion of the request.
+     *  [tutorial](https://restfulapi.net/http-methods/)
+    */
+    updateEntry: function(key, updEntry) {
+        // const updEntry = req.body;
+
+        if (typeof entries[key] === 'undefined') {
+            this._throwError({
+                message: `record "${key}" does not exist, nothing changed`,
+                code: 404
+            });
+        }
+        else if (typeof entries[updEntry.parent] === 'undefined') {
+            this._throwError({
+                message: `parent entry "${updEntry.parent}" does not exist, entry not updated`,
+                code: 400
+            });
+        }
+
+        // update entry
+        entries[key] = updEntry;
+        console.log(`model: entry "${key}" updated`);
+
+        return updEntry;
+    },
+
+    _throwError: function(error) {
+        console.log(`throw: ${error.message}`);
+        throw error;
     }
-
 };
-
 
 // Service
 const app = express();
@@ -60,9 +92,9 @@ app.use(express.json());
 //};
 
 /**
- * Model    HTTP/REST   Path        Input       code    Output  
+ * Model    HTTP/REST   Path        Input       code    Output
  * ===================================================================================
- * Create   POST        collection  new entry   201     entry*, location:entry-path        
+ * Create   POST        collection  new entry   201     entry*, location:entry-path
  * Read     GET         collection  -none-      200     entry[]
  * Read     GET         entry       -none-      200     entry
  * Update   PUT         entry       entry       200     entry*
@@ -73,8 +105,8 @@ app.use(express.json());
 const sendError = (error, response) => {
     response.status(error.code)
         .end();
-    console.error(`sent error: ${error.code} ${error.message}`); 
-}
+    console.error(`sent error: ${error.code} ${error.message}`);
+};
 
 app.get('/', function (req, res) {
     res.setHeader('Content-Type', 'text/plain')
@@ -85,12 +117,17 @@ app.get('/', function (req, res) {
 
 // Read collection
 app.get('/entry', function (req, res) {
-    const list = model.readEntries();
-    res.setHeader('Content-Type', 'application/json')
-        .status(200)
-        .send(JSON.stringify(list));
-    console.log(list);
-    //console.log(req.query);
+    try{
+        const list = model.readEntries();
+        res.setHeader('Content-Type', 'application/json')
+            .status(200)
+            .send(JSON.stringify(list));
+        console.log(`responded: collection ${JSON.stringify(list)}`);
+        //console.log(req.query);
+    }
+    catch(exc) {
+        sendError(exc, res);
+    }
 });
 
 // Read entry
@@ -101,7 +138,7 @@ app.get('/entry/:key', function (req, res) {
         res.setHeader('Content-Type', 'application/json')
             .status(200)
             .send(JSON.stringify(item));
-        console.log(`${item} sent`);
+        console.log(`responded: entry ${JSON.stringify(item)}`);
     }
     catch(exc) {
         sendError(exc, res);
@@ -118,12 +155,12 @@ app.post('/entry', function (req, res) {
         res.setHeader('Content-Type', 'application/json')
             .setHeader('Location', `/entry/${key}`)
             .status(201)
-            .send(JSON.stringify(entries[key]));        
-        console.log(`entry "${key}" created successfully`);
+            .send(JSON.stringify(entries[key]));
+        console.log(`responded: entry "${key}" created successfully`);
     }
     catch(exc) {
         sendError(exc, res);
-    }       
+    }
 });
 
 
@@ -132,41 +169,19 @@ app.post('/entry', function (req, res) {
 
 
 app.put('/entry/:key', function (req, res) {
-    let returnCode = 500;
-    
+    // let returnCode = 500;
     console.log(`request to change record ${req.params.key} received`);
-    // check existence of entry (validate input) if does not exist -> return error
-    const updEntry = req.body;
-    
-    if (typeof entries[req.params.key] === 'undefined') {
-        console.error(`record "${req.params.key}" does not exist, nothing changed`);
-        returnCode = 404;
-        res.status(returnCode)
+    try {
+        model.updateEntry(req.params.key, req.body);
+        res.status(204)
             .end();
+        console.log(`responded: entry "${req.params.key}" updated`);        
     }
-    else {
-        if (typeof entries[updEntry.parent] === 'undefined'){
-            returnCode = 400;
-            
-            res.status(returnCode)
-                .end();
-            console.error(`parent entry "${req.body.parent}" does no exist, entry not updated`);
-        }
-        
-        else {
-            entries[req.params.key] = updEntry;
-            returnCode = 204;
-
-            res.status(returnCode)
-                .end();
-
-            console.log(`entry "${req.params.key}" updated`);
-        }
+    catch (exc) {
+        sendError(exc, res);
     }
-    // TODO res.send() once
 });
 //console.log(req.query);
-
 
 
 // delete entry
@@ -194,7 +209,7 @@ app.delete('/entry/:key', function (req, res) {
             delete entries[req.params.key];
             returnCode = 200;
             console.log(`record ${req.params.key} deleted`);
-        }            
+        }
     }
 
 
