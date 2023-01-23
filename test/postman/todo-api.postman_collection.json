@@ -58,7 +58,7 @@
 			"response": []
 		},
 		{
-			"name": "bad-entry",
+			"name": "bad-url",
 			"request": {
 				"method": "GET",
 				"header": [],

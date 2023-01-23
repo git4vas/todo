@@ -20,7 +20,7 @@ const model = {
             throw {
                 message: `invalid key "${key}"`,
                 code: 404
-            }
+            };
         }
         return entries[key];
     },
@@ -74,6 +74,34 @@ const model = {
         return updEntry;
     },
 
+    deleteEntry: function(key) {
+        if (typeof entries[key] === 'undefined') {
+            this._throwError({
+                message: `entry ${key} does not exist`,
+                code: 404
+            });
+        }
+        else {
+            // empty? no -> return error (children exist)
+            let hasChildren = false;
+            _.forEach(entries, function(entry) {
+                if (entry.parent === key) {
+                    hasChildren = true;
+                    return false; // break loop (https://lodash.com/docs/4.17.15#forEach)
+                }
+            });
+            if (hasChildren === true) {
+                this._throwError({
+                    message: `entry "${key}" has children, not deleted`,
+                    code: 400});
+            }
+            delete entries[key];
+            console.log(`model: entry "${key}" deleted`);
+
+            return key; // TODO or something else?
+        }
+    },
+
     _throwError: function(error) {
         console.log(`throw: ${error.message}`);
         throw error;
@@ -105,19 +133,27 @@ app.use(express.json());
 const sendError = (error, response) => {
     response.status(error.code)
         .end();
-    console.error(`sent error: ${error.code} ${error.message}`);
+    console.log(`sent error: ${error.code} ${error.message}`);
 };
 
+// TODO res.send() once
+
+
+// root
+// TODO log 404 requests with invalid url
 app.get('/', function (req, res) {
+    console.log('new request');
     res.setHeader('Content-Type', 'text/plain')
         .status(200)
         .send('Hello World! now it\'s ' + new Date());
+    console.log('responded with current date');
     //res.status(200).json('something else');
 });
 
 // Read collection
 app.get('/entry', function (req, res) {
     try{
+        console.log('list of entries requested');
         const list = model.readEntries();
         res.setHeader('Content-Type', 'application/json')
             .status(200)
@@ -130,7 +166,7 @@ app.get('/entry', function (req, res) {
     }
 });
 
-// Read entry
+// Read entry from collection
 app.get('/entry/:key', function (req, res) {
     try{
         console.log(`entry "${req.params.key}" requested`);
@@ -145,12 +181,11 @@ app.get('/entry/:key', function (req, res) {
     }
 });
 
-
 // Create entry in collection
 app.post('/entry', function (req, res) {
     //let returnCode = 500;
     try {
-        console.log(`entry creation requested: ${req.body}`);
+        console.log(`entry creation requested: ${JSON.stringify(req.body)}`);
         const key = model.createEntry(req.body);
         res.setHeader('Content-Type', 'application/json')
             .setHeader('Location', `/entry/${key}`)
@@ -163,11 +198,7 @@ app.post('/entry', function (req, res) {
     }
 });
 
-
-// TODO res.send() once
-
-
-
+// Update entry in collection 
 app.put('/entry/:key', function (req, res) {
     // let returnCode = 500;
     console.log(`request to change record ${req.params.key} received`);
@@ -185,39 +216,19 @@ app.put('/entry/:key', function (req, res) {
 
 
 // delete entry
+// // TODO delete entry -r
 app.delete('/entry/:key', function (req, res) {
-    let returnCode = 500;
+    // let returnCode = 500;
     console.log(`request to delete record ${req.params.key} received`);
-    // check existence of entry (validate input) if does not exist -> return error
-    if (typeof entries[req.params.key] === 'undefined') {
-        console.error(`record ${req.params.key} does not exist`);
-        returnCode = 404;
+    try {
+        model.deleteEntry(req.params.key);
+        res.status(200)
+            .end();
+        console.log(`responded: entry "${req.params.key}" deleted`);
     }
-    else {
-        // empty? no -> return error (children exist)
-        let hasChildren = false;
-        _.forEach(entries, function(entry) {
-            if (entry.parent === req.params.key) {
-                hasChildren = true;
-                return false; // break loop (https://lodash.com/docs/4.17.15#forEach)
-            }
-        });
-        if (hasChildren === true) {
-            console.error(`entry "${req.params.key}" has children, not deleted`);
-        }
-        else{
-            delete entries[req.params.key];
-            returnCode = 200;
-            console.log(`record ${req.params.key} deleted`);
-        }
+    catch (exc) {
+        sendError(exc, res);
     }
-
-
-    // // TODO delete entry -r
-
-
-    res.status(returnCode)
-        .end();
 });
 
 
@@ -225,7 +236,7 @@ app.delete('/entry/:key', function (req, res) {
 
 const startServer = (port) => {
     app.listen(port, () => {
-        console.log('Running on port 8080!');
+        console.log(`Listening on port ${port}!`);
     });
 };
 
