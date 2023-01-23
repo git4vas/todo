@@ -4,6 +4,8 @@ A backend exercise to learn REST API
 
 ## start
 
+Don't forget to `git config --global user.name github-username`!!
+
 ```sh
 npm init
 npm install express
