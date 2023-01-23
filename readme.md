@@ -4,7 +4,17 @@ A backend exercise to learn REST API
 
 ## start
 
-Don't forget to `git config --global user.name github-username`!!
+### github
+
+[set email](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address)
+[GPG key](https://docs.github.com/en/authentication/managing-commit-signature-verification/adding-a-gpg-key-to-your-github-account)
+
+```sh
+git config --global user.name github-username
+git config --global user.email github-email
+```
+
+### node
 
 ```sh
 npm init
