@@ -53,6 +53,15 @@ npm i -D nodemon
 
 [postman](https://learning.postman.com/docs/getting-started/installation-and-updates/#installing-postman-on-linux)
 
+## backLog
+
+swagger: document API
+refactor logs
+ 
+import logger
+rw file
+add database
+
 
 ## readme!
 
